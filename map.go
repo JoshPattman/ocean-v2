@@ -42,6 +42,7 @@ func NewGeneratedMap(genParams MapGenerationParams) *Map {
 	for tx := range texels {
 		texels[tx] = make([]Texel, genParams.Height)
 		height := int(math.Round(perlinGen.Noise1D(float64(tx)/genParams.PerlinWidth) * genParams.PerlinHeight))
+		sandWidth := int(perlinGen.Noise1D(float64(tx)/64) * 15)
 		for ty := range texels[tx] {
 			density := perlinGen.Noise2D(float64(tx)/(genParams.CaveWidth*genParams.CaveAR), float64(ty)/genParams.CaveWidth)
 			if tx == 0 || ty == 0 || tx == len(texels)-1 || ty == len(texels[tx])-1 {
@@ -49,7 +50,7 @@ func NewGeneratedMap(genParams MapGenerationParams) *Map {
 				texels[tx][ty] = RockTexel
 			} else if ty < height+genParams.Height/2 && !(density > -genParams.CaveThresh && density < genParams.CaveThresh) {
 				// This is terrain
-				if ty >= height+genParams.Height/2-3 {
+				if ty >= height+genParams.Height/2-sandWidth-1 {
 					// Terrain sand
 					texels[tx][ty] = SandTexel
 				} else {
