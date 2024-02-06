@@ -42,9 +42,9 @@ func runSimulation(win *pixelgl.Window, simSettings SimulationSettings, userSett
 	currentMap := NewGeneratedMap(simSettings.MapGenerationParams)
 
 	// Create the entities
-	entities := make([]Entity, 0)
+	entities := NewEntitiesContainer()
 	for i := 0; i < 500; i++ {
-		entities = append(entities, NewFish(pixel.V(float64(i)*1+2, 250)))
+		entities.Add(NewFish(pixel.V(float64(i)*1+2, 250)))
 	}
 
 	// Create the batch so we can draw all entities at once
@@ -77,7 +77,7 @@ func runSimulation(win *pixelgl.Window, simSettings SimulationSettings, userSett
 		currentPixelsPerMeter *= scaleSpd
 
 		if win.JustPressed(pixelgl.KeyB) {
-			for _, e := range entities {
+			for _, e := range entities.All() {
 				if !e.IsKinematic() {
 					e.ApplyImpulse(pixel.V(50, 0).Rotated(rand.Float64() * 3.14159 * 2))
 				}
@@ -85,21 +85,21 @@ func runSimulation(win *pixelgl.Window, simSettings SimulationSettings, userSett
 		}
 
 		// Update logic for entities
-		for _, e := range entities {
+		for _, e := range entities.All() {
 			e.StepLogic()
 		}
 
 		// Update forces and integrate kinematics
-		for _, e := range entities {
+		for _, e := range entities.All() {
 			if !e.IsKinematic() {
 				e.StepPhysics()
 			}
 		}
 
 		// Process collisions and ensure the solver ends in a valid state
-		for i, e := range entities {
+		for i, e := range entities.All() {
 			CollideMapEntity(currentMap, e)
-			for j, e2 := range entities {
+			for j, e2 := range entities.All() {
 				if j <= i {
 					continue
 				}
@@ -128,9 +128,13 @@ func runSimulation(win *pixelgl.Window, simSettings SimulationSettings, userSett
 
 		// Render all of the entities
 		entitiesBatch.Clear()
-		for _, e := range entities {
+		for _, e := range entities.All() {
 			e.Render(renderDataEntities)
 		}
 		entitiesBatch.Draw(win)
 	}
+}
+
+func (e *FishEntity) Tags() []string {
+	return []string{"fish"}
 }

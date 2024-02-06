@@ -37,3 +37,5 @@ func (e *DummyEntity) Render(rd *RenderData) {
 func (e *DummyEntity) StepLogic() {
 	e.ApplyForce(pixel.V(0, -9.81*e.Mass()))
 }
+
+func (e *DummyEntity) Tags() []string { return []string{} }

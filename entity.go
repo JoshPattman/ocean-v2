@@ -24,6 +24,7 @@ type Entity interface {
 	StepPhysics()
 	StepLogic()
 	IsKinematic() bool
+	Tags() []string // Tags should stay the same after initialisation
 }
 
 // EntityBase is a useful implementation of the physics for an entity, for use with composition.
@@ -104,3 +105,34 @@ func (p *EntityBase) StepPhysics() {
 
 // Default all entities to be physics-enabled
 func (p *EntityBase) IsKinematic() bool { return false }
+
+type EntitiesContainer struct {
+	allEntities    []Entity
+	taggedEntities map[string][]Entity
+}
+
+func NewEntitiesContainer() *EntitiesContainer {
+	return &EntitiesContainer{
+		allEntities:    make([]Entity, 0),
+		taggedEntities: make(map[string][]Entity),
+	}
+}
+
+func (ec *EntitiesContainer) Add(e Entity) {
+	ec.allEntities = append(ec.allEntities, e)
+	for _, t := range e.Tags() {
+		if _, ok := ec.taggedEntities[t]; ok {
+			ec.taggedEntities[t] = append(ec.taggedEntities[t], e)
+		} else {
+			ec.taggedEntities[t] = []Entity{e}
+		}
+	}
+}
+
+func (ec *EntitiesContainer) All() []Entity {
+	return ec.allEntities
+}
+
+func (ec *EntitiesContainer) WithTag(tag string) []Entity {
+	return ec.taggedEntities[tag]
+}
