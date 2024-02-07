@@ -48,3 +48,16 @@ func CollideMapEntity(m *Map, e Entity) {
 func DragForce(vel pixel.Vec, coeff float64) pixel.Vec {
 	return pixel.V(math.Abs(vel.X)*vel.X, math.Abs(vel.Y)*vel.Y).Scaled(-coeff)
 }
+
+func SignedAngleBetween(a, b pixel.Vec) float64 {
+	au, bu := a.Unit(), b.Unit()
+
+	angle := math.Acos(au.Dot(bu))
+
+	aup := au.Rotated(math.Pi)
+	if aup.Dot(bu) > 0 {
+		angle *= -1
+	}
+
+	return angle
+}

@@ -12,6 +12,7 @@ import (
 type FishEntity struct {
 	EntityBase
 	anim        *Animator
+	angle       float64
 	nextDir     pixel.Vec
 	lastDirTime time.Time
 	col         color.Color
@@ -41,7 +42,8 @@ func NewFish(pos pixel.Vec) *FishEntity {
 	return &FishEntity{
 		*NewEntityBase(pos, 1, 0.5),
 		anim,
-		pixel.Unit(rand.Float64() * 3.14 * 2),
+		0,
+		pixel.Unit(rand.Float64() * rand.Float64() * 3.14 * 2),
 		time.Now(),
 		pixel.RGB(rand.Float64(), rand.Float64(), rand.Float64()),
 	}
@@ -50,8 +52,8 @@ func NewFish(pos pixel.Vec) *FishEntity {
 func (e *FishEntity) Render(rd *RenderData) {
 	s := e.anim.CurrentSprite()
 	tmat := pixel.IM.Scaled(pixel.ZV, e.Radius()*2/s.Frame().W())
-	rotAngle := e.Velocity().Angle()
-	if e.Velocity().X < 0 {
+	rotAngle := e.angle
+	if math.Cos(e.angle) < 0 {
 		rotAngle += math.Pi
 	}
 	tmat = tmat.Rotated(pixel.ZV, rotAngle)
@@ -61,20 +63,25 @@ func (e *FishEntity) Render(rd *RenderData) {
 	s.DrawColorMask(rd.Target, tmat, e.col)
 }
 
-// StepLogic adds forces and stuff to be integrated later, in this case adds gravity
 func (e *FishEntity) StepLogic() {
 	if time.Since(e.lastDirTime).Seconds() > 5 {
 		e.lastDirTime = time.Now()
 		e.nextDir = pixel.Unit(rand.Float64() * 3.14 * 2)
 	}
-	if e.Velocity().X < 0 {
+	maxRot := math.Pi * 2 / 60.0
+	if SignedAngleBetween(e.nextDir, pixel.Unit(e.angle)) > 0 {
+		e.angle += maxRot
+	} else {
+		e.angle -= maxRot
+	}
+	if math.Cos(e.angle) < 0 {
 		e.anim.PlayIfNot("swimleft")
 	} else {
 		e.anim.PlayIfNot("swimright")
 	}
 	e.anim.Step(1.0 / 60)
 	// Move towards target
-	e.ApplyForce(e.nextDir.Scaled(5))
+	e.ApplyForce(pixel.V(5, 0).Rotated(e.angle))
 	// Drag
 	e.ApplyForce(DragForce(e.Velocity(), 1))
 }
